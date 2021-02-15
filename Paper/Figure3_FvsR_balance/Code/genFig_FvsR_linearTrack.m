@@ -2,22 +2,54 @@
 addpath('../../../');
 clear;
 setParams;
-params.maze             = zeros(3,10); % zeros correspond to 'visitable' states
-params.maze(2,:)        = 1; % wall
-params.s_start          = [1,1;3,size(params.maze,2)]; % beginning state (in matrix notation)
-params.s_start_rand     = false; % Start at random locations after reaching goal
+% params.maze             = zeros(3,10); % zeros correspond to 'visitable' states
+% params.maze(2,:)        = 1; % wall
+% params.s_start          = [1,1;3,size(params.maze,2)]; % beginning state (in matrix notation)
+% params.s_start_rand     = false; % Start at random locations after reaching goal
+% 
+% params.s_end            = [1,size(params.maze,2);3,1]; % goal state (in matrix notation)
+% params.rewMag           = 1; % reward magnitude (rows: locations; columns: values)
 
-params.s_end            = [1,size(params.maze,2);3,1]; % goal state (in matrix notation)
+
+params.maze             = zeros(7,11); % zeros correspond to 'visitable' states
+params.maze(3:7,3:9)      = 1; % wall
+params.maze(3:4,6)      = 0; % wall
+params.s_start          = [4,6]; % beginning state (in matrix notation)
+params.s_start_rand     = false; % Start at random locations after reaching goal
+params.s_end            = [7,1; 7,11]; % goal state (in matrix notation)
 params.rewMag           = 1; % reward magnitude (rows: locations; columns: values)
+
+
+% params.maze             = zeros(6,7); % zeros correspond to 'visitable' states
+% params.maze(2:6,2:3)      = 1; % wall
+% params.maze(2:6,5:6)      = 1; % wall
+% params.s_start          = [6,4]; % beginning state (in matrix notation)
+% params.s_start_rand     = false; % Start at random locations after reaching goal
+% params.s_end            = [6,1;6,7]; % goal state (in matrix notation)
+% params.rewMag           = [1,0.2; 0.6,1]; % reward magnitude (rows: locations; columns: values)
+
+
+% params.maze             = zeros(6,7); % zeros correspond to 'visitable' states
+% params.maze(2:6,2:6)      = 1; % wall
+% params.maze(2,4)      = 0; % wall
+% params.s_start          = [2,4]; % beginning state (in matrix notation)
+% params.s_start_rand     = false; % Start at random locations after reaching goal
+% params.s_end            = [6,1;6,7]; % goal state (in matrix notation)
+% params.rewMag           = 1; % reward magnitude (rows: locations; columns: values)
+
+
 params.rewSTD           = 0.1; % reward Gaussian noise (rows: locations; columns: values)
 params.rewProb          = 1; % probability of receiving each reward (columns: values)
 
+params.s_choice = [2,6];
+params.planOnlyAtGorS   = true;
+
 %% OVERWRITE PARAMETERS
-params.N_SIMULATIONS    = 10000; % number of times to run the simulation
+params.N_SIMULATIONS    = 5; % number of times to run the simulation
 params.MAX_N_STEPS      = 1e5; % maximum number of steps to simulate
 params.MAX_N_EPISODES   = 50; % maximum number of episodes to simulate (use Inf if no max)
 params.nPlan            = 20; % number of steps to do in planning (set to zero if no planning or to Inf to plan for as long as it is worth it)
-params.onVSoffPolicy    = 'off-policy'; % Choose 'off-policy' (default, learns Q*) or 'on-policy' (learns Qpi) learning for updating Q-values and computing gain
+params.onVSoffPolicy    = 'on-policy'; % Choose 'off-policy' (default, learns Q*) or 'on-policy' (learns Qpi) learning for updating Q-values and computing gain
 
 params.alpha            = 1.0; % learning rate
 params.gamma            = 0.9; % discount factor
@@ -27,11 +59,11 @@ params.setAllGainToOne  = false; % Set the gain term of all items to one (for de
 params.setAllNeedToOne  = false; % Set the need term of all items to one (for debugging purposes)
 params.setAllNeedToZero = false; % Set the need term of all items to zero, except for the current state (for debugging purposes)
 
-params.PLOT_STEPS       = false; % Plot each step of real experience
-params.PLOT_Qvals       = false; % Plot Q-values
-params.PLOT_PLANS       = false; % Plot each planning step
+params.PLOT_STEPS       = true; % Plot each step of real experience
+params.PLOT_Qvals       = true; % Plot Q-values
+params.PLOT_PLANS       = true; % Plot each planning step
 params.PLOT_EVM         = false; % Plot need and gain
-params.PLOT_wait        = 11 ; % Number of full episodes completed before plotting
+params.PLOT_wait        = 10 ; % Number of full episodes completed before plotting
 
 saveStr = input('Do you want to produce figures (y/n)? ','s');
 if strcmp(saveStr,'y')
