@@ -49,5 +49,5 @@ params.PLOT_wait        = 1 ; % Number of full episodes completed before plottin
 
 
 %% RUN SIMULATION
-rng(mean('replay'));
+rng(mean('replay'));  % mean('replay') is the seed for the random number generator
 simData = replaySim(params);
