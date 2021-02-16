@@ -41,8 +41,11 @@ params.rewMag           = 1; % reward magnitude (rows: locations; columns: value
 params.rewSTD           = 0.1; % reward Gaussian noise (rows: locations; columns: values)
 params.rewProb          = 1; % probability of receiving each reward (columns: values)
 
-params.s_choice = [2,6];
+params.s_choice = [2,6];  % position: 37
 params.planOnlyAtGorS   = true;
+
+choice_position = 37;
+
 
 %% OVERWRITE PARAMETERS
 params.N_SIMULATIONS    = 5; % number of times to run the simulation
@@ -63,7 +66,7 @@ params.PLOT_STEPS       = true; % Plot each step of real experience
 params.PLOT_Qvals       = true; % Plot Q-values
 params.PLOT_PLANS       = true; % Plot each planning step
 params.PLOT_EVM         = false; % Plot need and gain
-params.PLOT_wait        = 10 ; % Number of full episodes completed before plotting
+params.PLOT_wait        = 51 ; % Number of full episodes completed before plotting
 
 saveStr = input('Do you want to produce figures (y/n)? ','s');
 if strcmp(saveStr,'y')
@@ -105,8 +108,55 @@ for s=1:numel(params.maze)
         nextState(s,a) = stp1i;
     end
 end
+%%
+
+for k=1:length(simData)
+    fprintf('Simulation #%d\n',k);
+    % Identify candidate replay events: timepoints in which the number of replayed states is greater than minFracCells,minNumCells
+    candidateEvents = find(cellfun('length',simData(k).replay.state)>=max(sum(params.maze(:)==0)*minFracCells,minNumCells));
+    agentPos = simData(k).expList(candidateEvents,1); % agent position during each candidate event
+    candidateEvents = candidateEvents(agentPos==choice_position);
+    lapNum = [0;simData(k).numEpisodes(1:end-1)] + 1; % episode number for each time point
+    lapNum_events = lapNum(candidateEvents); % episode number for each candidate event
+    agentPos = simData(k).expList(candidateEvents,1); % agent position during each candidate event
+    
+    for e=1:length(candidateEvents)
+        eventState = simData(k).replay.state{candidateEvents(e)}; % In a multi-step sequence, simData.replay.state has 1->2 in one row, 2->3 in another row, etc
+        eventAction = simData(k).replay.action{candidateEvents(e)}; % In a multi-step sequence, simData.replay.action has the action taken at each step of the trajectory
+        
+         % Identify break points in this event, separating event into sequences
+        eventDir = cell(1,length(eventState)-1);
+        breakPts = 0; % Save breakpoints that divide contiguous replay events
+        for i=1:(length(eventState)-1)
+            % If right from choice_point
+            if eventState(i) > 42 % larger than 42 corresponds to any state in column 7 or larger in a maze of 7x11 
+                eventDir{i} = 'R';
+            end
+            % If left from choice_point
+            if eventState(i) < 36 % smaller than 36 corresponds to any state in column 5 or smaller in a maze of 7x11
+                eventDir{i} = 'L';
+            end
+            
+            % Find if this is a break point
+            if isempty(eventDir{i}) % If this transition was neither forward nor backward
+                breakPts = [breakPts (i-1)]; % Then, call this a breakpoint
+            elseif i>1
+                if ~strcmp(eventDir{i},eventDir{i-1}) % If this transition was forward and the previous was backwards (or vice-versa)
+                    breakPts = [breakPts (i-1)]; % Then, call this a breakpoint
+                end
+            end
+            if i==(length(eventState)-1)
+                breakPts = [breakPts i]; % Add a breakpoint after the last transition
+            end
+        end
+    end
+    
+    % make some plots
 
 
+end
+
+%%
 for k=1:length(simData)
     fprintf('Simulation #%d\n',k);
     % Identify candidate replay events: timepoints in which the number of replayed states is greater than minFracCells,minNumCells
