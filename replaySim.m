@@ -121,7 +121,7 @@ for tsi=1:params.MAX_N_STEPS
         else
             plotMazeWithArrows(st,max(Q,[],2),nan(size(Q(:))),params,'b2r(-1,1)','b2r(-1,1)')
         end
-        set(gcf,'Position',[1,535,560,420])
+        %set(gcf,'Position',[1,535,560,420])
     end
     
     
@@ -244,10 +244,10 @@ for tsi=1:params.MAX_N_STEPS
             else
                 plotMazeWithArrows(st,max(Q,[],2),nan(size(Q(:))),params,'b2r(-1,1)','b2r(-1,1)')
             end
-            set(gcf,'Position',[1,535,560,420])
+            %set(gcf,'Position',[1,535,560,420])
             figure(2); clf;
             plotMazeWithArrows(st,SR_or_SD',5*saGain(:),params,'YlGnBu','gray'); % Notice the scaling factor, causing Gain=0.25 to be colored as yellow
-            set(gcf,'Position',[562,535,560,420])
+            %set(gcf,'Position',[562,535,560,420])
         end
         
         
@@ -283,7 +283,7 @@ for tsi=1:params.MAX_N_STEPS
                 else
                     plotMazeWithArrows(st,max(Q,[],2),nan(size(Q(:))),params,'b2r(-1,1)','b2r(-1,1)',highlight,rew)
                 end
-                set(gcf,'Position',[1,535,560,420])
+                %set(gcf,'Position',[1,535,560,420])
             end
             
             for n=1:size(planExp{maxEVM_idx},1)
