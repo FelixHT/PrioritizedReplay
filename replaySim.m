@@ -178,7 +178,7 @@ for tsi=1:params.MAX_N_STEPS
     
     
     %% PLANNING STEPS
-    while p <= params.nPlan
+    while p <= params.nPlan  % potentially modify this condition to use a different number of planning steps at the choice point
         
         % Create a list of 1-step backups based on 1-step models
         planExp = [reshape(repmat((1:nStates)',1,nActions),[],1) , reshape(repmat(1:nActions,nStates,1),[],1) , expLast_rew(:) , expLast_stp1(:)];
