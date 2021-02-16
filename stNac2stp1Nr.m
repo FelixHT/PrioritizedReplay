@@ -1,5 +1,5 @@
 function [rew,stp1,stp1i] = stNac2stp1Nr(st,at,params)
-% STNAC2STP1 - state and action to next state and reward 
+% STNAC2STP1 - state and action to next state (state plus one) and reward 
 
 % Dimensions of the maze
 [sideII,sideJJ] = size(params.maze);
