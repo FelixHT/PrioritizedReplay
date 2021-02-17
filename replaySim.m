@@ -335,7 +335,7 @@ for tsi=1:params.MAX_N_STEPS
         else
             % Determine which of the possible start states to use
             goalnum = find(ismember(params.s_end,st,'rows'));
-            startnum = mod(goalnum,size(params.s_start,1)) + 1;
+            startnum = mod(goalnum,size(params.s_start,1)) + 1;  % uses the start state at the row below the currently reached end state
             stp1 = params.s_start(startnum,:);
             stp1i = sub2ind( [sideII,sideJJ], stp1(1), stp1(2) );
         end
