@@ -11,12 +11,12 @@ setParams;
 % params.rewMag           = 1; % reward magnitude (rows: locations; columns: values)
 
 
-params.maze             = zeros(7,11); % zeros correspond to 'visitable' states
-params.maze(3:7,3:9)      = 1; % wall
-params.maze(3:4,6)      = 0; % wall
+params.maze             = zeros(6,11); % zeros correspond to 'visitable' states
+params.maze(2:6,3:9)      = 1; % wall
+params.maze(2:4,6)      = 0; % wall
 params.s_start          = [4,6]; % beginning state (in matrix notation)
 params.s_start_rand     = false; % Start at random locations after reaching goal
-params.s_end            = [7,1; 7,11]; % goal state (in matrix notation)
+params.s_end            = [6,1; 6,11]; % goal state (in matrix notation)
 params.rewMag           = 1; % reward magnitude (rows: locations; columns: values)
 
 
@@ -41,10 +41,10 @@ params.rewMag           = 1; % reward magnitude (rows: locations; columns: value
 params.rewSTD           = 0.1; % reward Gaussian noise (rows: locations; columns: values)
 params.rewProb          = 1; % probability of receiving each reward (columns: values)
 
-params.s_choice = [2,6];  % position: 37
+params.s_choice = [1,6];  % position: 37
 params.planOnlyAtGorS   = true;
-
-choice_position = 37;
+params.planAtChoicePoint = true;
+choice_position = 31;
 
 
 %% OVERWRITE PARAMETERS
@@ -66,7 +66,7 @@ params.PLOT_STEPS       = true; % Plot each step of real experience
 params.PLOT_Qvals       = true; % Plot Q-values
 params.PLOT_PLANS       = true; % Plot each planning step
 params.PLOT_EVM         = false; % Plot need and gain
-params.PLOT_wait        = 51 ; % Number of full episodes completed before plotting
+params.PLOT_wait        = 40 ; % Number of full episodes completed before plotting
 
 saveStr = input('Do you want to produce figures (y/n)? ','s');
 if strcmp(saveStr,'y')
@@ -129,11 +129,13 @@ for k=1:length(simData)
         breakPts = 0; % Save breakpoints that divide contiguous replay events
         for i=1:(length(eventState)-1)
             % If right from choice_point
-            if eventState(i) > 42 % larger than 42 corresponds to any state in column 7 or larger in a maze of 7x11 
+%             if eventState(i) > 42 % larger than 42 corresponds to any state in column 7 or larger in a maze of 7x11 
+            if nextState(eventState(i),eventAction(i)) == eventState(i+1) && eventState(i) >36
                 eventDir{i} = 'R';
             end
             % If left from choice_point
-            if eventState(i) < 36 % smaller than 36 corresponds to any state in column 5 or smaller in a maze of 7x11
+%             if eventState(i) < 36 % smaller than 36 corresponds to any state in column 5 or smaller in a maze of 7x11
+            if nextState(eventState(i),eventAction(i)) == eventState(i+1) && eventState(i) <31
                 eventDir{i} = 'L';
             end
             
