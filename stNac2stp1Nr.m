@@ -54,7 +54,7 @@ if ismember(stp1,params.s_end,'rows')
     else
         thisSTD = params.rewSTD(1,:);
     end
-    % Draw a sample from the reward magnutude list
+    % Draw a sample from the reward magnitude list
     if size(thisRew,2) == size(params.rewProb,2)
         thisProb = params.rewProb/sum(params.rewProb);
         rewIdx = find(rand > [0 cumsum(thisProb)],1,'last'); % Select reward
