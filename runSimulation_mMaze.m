@@ -10,7 +10,7 @@ params.s_end            = [6,1;6,7]; % goal state (in matrix notation)
 params.rewMag           = [1; 1]; % reward magnitude (rows: locations; columns: values)
 
 params.s_choice = [2,4];
-
+params.planAtChoicePoint = true
 % linear track 2 starting locations, 2 goals
 % params.maze             = zeros(3,10); % zeros correspond to 'visitable' states
 % params.maze(2,:)        = 1; % wall
@@ -32,7 +32,7 @@ params.PLOT_Qvals       = true; % Plot Q-values
 params.PLOT_PLANS       = true; % Plot each planning step
 params.PLOT_EVM         = true; % Plot need and gain
 params.PLOT_TRACE       = false; % Plot all planning traces
-params.PLOT_wait        = 5 ; % Number of full episodes completed before plotting
+params.PLOT_wait        = 8 ; % Number of full episodes completed before plotting
 
 
 %% RUN SIMULATION

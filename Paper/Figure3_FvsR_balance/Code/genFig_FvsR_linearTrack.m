@@ -33,6 +33,8 @@ params.PLOT_PLANS       = false; % Plot each planning step
 params.PLOT_EVM         = false; % Plot need and gain
 params.PLOT_wait        = 11 ; % Number of full episodes completed before plotting
 
+params.planAtChoicePoint = false
+
 saveStr = input('Do you want to produce figures (y/n)? ','s');
 if strcmp(saveStr,'y')
     saveBool = true;
@@ -75,7 +77,7 @@ for s=1:numel(params.maze)
 end
 
 
-for k=1:length(simData)
+for k=1:length(simData)  % for each simulation
     fprintf('Simulation #%d\n',k);
     % Identify candidate replay events: timepoints in which the number of replayed states is greater than minFracCells,minNumCells
     candidateEvents = find(cellfun('length',simData(k).replay.state)>=max(sum(params.maze(:)==0)*minFracCells,minNumCells));
@@ -83,7 +85,7 @@ for k=1:length(simData)
     lapNum_events = lapNum(candidateEvents); % episode number for each candidate event
     agentPos = simData(k).expList(candidateEvents,1); % agent position during each candidate event
     
-    for e=1:length(candidateEvents)
+    for e=1:length(candidateEvents)  % for each candidate event
         eventState = simData(k).replay.state{candidateEvents(e)}; % In a multi-step sequence, simData.replay.state has 1->2 in one row, 2->3 in another row, etc
         eventAction = simData(k).replay.action{candidateEvents(e)}; % In a multi-step sequence, simData.replay.action has the action taken at each step of the trajectory
         
@@ -173,6 +175,8 @@ end
 % Compute the number of significant events BEFORE (preplay) and AFTER (replay) an event (which could be larger than 1)
 % PS: Notice that this is not a measure of the percent of episodes with a significant event (which would produce a smaller numbers)
 preplayF = nansum([forwardCount(:,1),forwardCount(:,30)],2)./params.MAX_N_EPISODES;
+% sti = 6 is the same as s(1)=3 s2=2, it is the position just next to the goal on the left
+% sti = 25 is the same as s(1)=1 s2=9, it is the position just next to the goal on the right
 replayF = nansum([forwardCount(:,6),forwardCount(:,25)],2)./params.MAX_N_EPISODES;
 preplayR = nansum([reverseCount(:,1),reverseCount(:,30)],2)./params.MAX_N_EPISODES;
 replayR = nansum([reverseCount(:,6),reverseCount(:,25)],2)./params.MAX_N_EPISODES;

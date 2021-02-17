@@ -13,7 +13,8 @@ params.N_SIMULATIONS    = 1; % number of times to run the simulation
 params.MAX_N_STEPS      = 1e5; % maximum number of steps to simulate
 params.MAX_N_EPISODES   = 5; % maximum number of episodes to simulate (use Inf if no max) -> Choose between 20 and 100
 params.nPlan            = 20; % number of steps to do in planning (set to zero if no planning or to Inf to plan for as long as it is worth it)
-
+params.rewMag           = 1;
+params.rewProb          = 1; 
 params.setAllGainToOne  = false; % Set the gain term of all items to one (for illustration purposes)
 params.setAllNeedToOne  = false; % Set the need term of all items to one (for illustration purposes)
 params.rewSTD           = 0.1; % reward standard deviation (can be a vector -- e.g. [1 0.1])
@@ -26,6 +27,8 @@ params.baselineGain     = 1e-10; % Gain is set to at least this value (interpret
 params.alpha            = 1.0; % learning rate for real experience (non-bayesian)
 params.copyQinPlanBkps  = false; % Copy the Q-value (mean and variance) on planning backups (i.e., LR=1.0)
 params.copyQinGainCalc  = true; % Copy the Q-value (mean and variance) on gain calculation (i.e., LR=1.0)
+
+params.planAtChoicePoint = false
 
 saveStr = input('Do you want to produce figures (y/n)? ','s');
 if strcmp(saveStr,'y')

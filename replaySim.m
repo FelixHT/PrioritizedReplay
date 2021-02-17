@@ -159,11 +159,17 @@ for tsi=1:params.MAX_N_STEPS
     %% PLANNING PREP
     p=1; % Initialize planning step counter
     if params.planOnlyAtGorS % Only do replay if either current or last trial was a goal state
-        curr_step_is_choice = ismember(expList(end,1),sub2ind(size(params.maze),params.s_choice(:,1),params.s_choice(:,2)));
+        if params.planAtChoicePoint
+            curr_step_is_choice = ismember(expList(end,1),sub2ind(size(params.maze),params.s_choice(:,1),params.s_choice(:,2)));
+        end
         curr_step_is_goal = ismember(expList(end,4),sub2ind(size(params.maze),params.s_end(:,1),params.s_end(:,2))); % Current step is a move towards a goal
         last_step_was_goal = any(ismember([expList(end-1,4);expList(end-1,1)],sub2ind(size(params.maze),params.s_end(:,1),params.s_end(:,2))));  % previous state (notice that we include both start and end state of the previous timestep, because the last row of expList might be a transition from goal to start)
-        if and(~or( curr_step_is_goal , last_step_was_goal ), ~or(curr_step_is_goal,curr_step_is_choice))
+        if ~curr_step_is_goal & ~last_step_was_goal
             p=Inf; % Otherwise, no planning
+        elseif params.planAtChoicePoint
+            if~curr_step_is_choice
+                p=Inf; % Otherwise, no planning
+            end
         end
     end
     if and(rew==0,numEpisodes==0)
