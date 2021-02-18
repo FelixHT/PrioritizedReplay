@@ -38,6 +38,7 @@ params.setAllGainToOne  = false; % Set the gain term of all items to one (for de
 params.setAllNeedToOne  = false; % Set the need term of all items to one (for debugging purposes)
 params.setAllNeedToZero = false; % Set the need term of all items to zero, except for the current state (for debugging purposes)
 
+params.planAtChoicePoint = false  % When true, enable planning at the choice point defined at s_choice
 
 %% PLOTTING SETTINGS
 params.PLOT_STEPS       = false; % Plot each step of real experience
@@ -46,7 +47,7 @@ params.PLOT_PLANS       = false; % Plot each planning step
 params.PLOT_EVM         = false; % Plot need and gain
 params.PLOT_TRACE       = false; % Plot all planning traces ???: Need to implement this
 params.PLOT_wait        = 1 ; % Number of full episodes completed before plotting
-params.delay            = 0.2; % How long to wait between successive plots
+params.delay            = 0.1; % How long to wait between successive plots
 
 params.arrowOffset      = 0.25;
 params.arrowSize        = 100;
