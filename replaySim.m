@@ -158,7 +158,8 @@ for tsi=1:params.MAX_N_STEPS
     
     %% PLANNING PREP
     p=inf; % Initialize planning step counter
-    if params.planOnlyAtGorS % Only do replay if either current or last trial was a goal state
+    if params.planOnlyAtGorS % Only do replay if either current or last trial was a goal state,
+                                % or a choice point, if planAtChoicePoint is enabled
         if params.planAtChoicePoint
             curr_step_is_choice = ismember(expList(end,1),sub2ind(size(params.maze),params.s_choice(:,1),params.s_choice(:,2)));
         end
