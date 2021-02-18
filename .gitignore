@@ -10,6 +10,7 @@ Paper/RLDM2017_Mattar&Daw/
 
 # Data files
 *.mat
+*.asv
 
 # Images
 *.ai
