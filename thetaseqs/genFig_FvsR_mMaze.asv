@@ -179,8 +179,7 @@ for k=1:length(simData)
 %             elseif ~past_in_seq && (~next_in_seq && (nextState(eventState(i),eventAction(i))<31 || eventState(i) <31))
 %                 eventDir{e,i} = 'LLL';
 %             end
-
-%             Find if this is a break point
+            % Find if this is a break point
             if isempty(eventDir{i}) % If this transition was neither forward nor backward
                 breakPts = [breakPts (i-1)]; % Then, call this a breakpoint
             elseif i>1
@@ -192,63 +191,8 @@ for k=1:length(simData)
                 breakPts = [breakPts i]; % Add a breakpoint after the last transition
             end
         end
-        
-%         Break this event into segments of sequential activity
-        for j=1:(numel(breakPts)-1)
-            thisChunk = (breakPts(j)+1):(breakPts(j+1));
-            if (length(thisChunk)+1) >= minNumCells
-%                 Extract information from this sequential event
-                replayDir = eventDir(thisChunk); % Direction of transition
-                replayState = eventState([thisChunk (thisChunk(end)+1)]); % Start state
-                replayAction = eventAction([thisChunk (thisChunk(end)+1)]); % Action
-                
-%                 Assess the significance of this event
-                allPerms = cell2mat(arrayfun(@(x)randperm(length(replayState)),(1:nPerm)','UniformOutput',0));
-                sigBool = true; 
-                if runPermAnalysis
-                    fracFor = nanmean(strcmp(replayDir,'F')); % Fraction of transitions in this chunk whose direction was forward
-                    fracRev = nanmean(strcmp(replayDir,'R')); % Fraction of transitions in this chunk whose direction was reverse
-                    disScore = fracFor-fracRev;
-                    dirScore_perm = nan(1,nPerm);
-                    for p=1:nPerm
-                        thisPerm = randperm(length(replayState));
-                        replayState_perm = replayState(thisPerm);
-                        replayAction_perm = replayAction(thisPerm);
-                        replayDir_perm = cell(1,length(replayState_perm)-1);
-                        for i=1:(length(replayState_perm)-1)
-                            if nextState(replayState_perm(i),replayAction_perm(i)) == replayState_perm(i+1)
-                                replayDir_perm{i} = 'F';
-                            end
-                            if nextState(replayState_perm(i+1),replayAction_perm(i+1)) == replayState_perm(i)
-                                replayDir_perm{i} = 'R';
-                            end
-                        end
-                        fracFor = nanmean(strcmp(replayDir_perm,'F'));
-                        fracRev = nanmean(strcmp(replayDir_perm,'R'));
-                        dirScore_perm(p) = fracFor-fracRev;
-                    end
-                    dirScore_perm = sort(dirScore_perm);
-                    lThresh_score = dirScore_perm(floor(nPerm*0.025));
-                    hThresh_score = dirScore_perm(ceil(nPerm*0.975));
-                    if (disScore<lThresh_score) || (disScore>hThresh_score)
-                        sigBool = true;
-                    else
-                        sigBool = false;
-                    end
-                end
-                
-%                 Add significant events to 'bucket'
-                if sigBool
-                    if replayDir{1}=='F'
-                        forwardCount(k,agentPos(e)) = forwardCount(k,agentPos(e)) + 1;
-                    elseif replayDir{1}=='R'
-                        reverseCount(k,agentPos(e)) = reverseCount(k,agentPos(e)) + 1;
-                    end
-                end
-            end
-        end
     end
-
+    
     % make some plots
     
     edir=cell2mat(eventDir);
@@ -303,14 +247,12 @@ figure(1); clf;
 hold on
 f1 = bar(data);
 errorbar(1:3,data,err,err);
-% legend({'Preplay to the left','Preplay to the right', 'Preplay in both directions'},'Location','NortheastOutside');
-% f1(1).FaceColor=[1 1 1]; % Replay bar color
-% f1(1).LineWidth=1;
-% f1(2).FaceColor=[0 0 0]; % Replay bar color
-% f1(2).LineWidth=1;
-title('Preplay in directions from the decision point');
-xticks([1,2,3]);
-set(f1(1).Parent,'XTickLabel',{'left only','right only', 'both'});
+legend({'Plan only to go left','Plan only to go right', 'Pl'},'Location','NortheastOutside');
+f1(1).FaceColor=[1 1 1]; % Replay bar color
+f1(1).LineWidth=1;
+f1(2).FaceColor=[0 0 0]; % Replay bar color
+f1(2).LineWidth=1;
+set(f1(1).Parent,'XTickLabel',{'Forward correlated','Reverse correlated'});
 % ymax=ceil(max(reshape([nanmean(preplayF) nanmean(replayF) ; nanmean(preplayR) nanmean(replayR)],[],1)));
 % ylim([0 ymax]);
 % ylabel('Events/Lap');
@@ -424,32 +366,32 @@ grid on
 
 %% PLOT
 
-% % Forward-vs-Reverse
-% figure(1); clf;
-% f1 = bar([nanmean(preplayF) nanmean(replayF) ; nanmean(preplayR) nanmean(replayR)]);
-% legend({'Preplay','Replay'},'Location','NortheastOutside');
-% f1(1).FaceColor=[1 1 1]; % Replay bar color
-% f1(1).LineWidth=1;
-% f1(2).FaceColor=[0 0 0]; % Replay bar color
-% f1(2).LineWidth=1;
-% set(f1(1).Parent,'XTickLabel',{'Forward correlated','Reverse correlated'});
-% ymax=ceil(max(reshape([nanmean(preplayF) nanmean(replayF) ; nanmean(preplayR) nanmean(replayR)],[],1)));
-% ylim([0 ymax]);
-% ylabel('Events/Lap');
-% grid on
+% Forward-vs-Reverse
+figure(1); clf;
+f1 = bar([nanmean(preplayF) nanmean(replayF) ; nanmean(preplayR) nanmean(replayR)]);
+legend({'Preplay','Replay'},'Location','NortheastOutside');
+f1(1).FaceColor=[1 1 1]; % Replay bar color
+f1(1).LineWidth=1;
+f1(2).FaceColor=[0 0 0]; % Replay bar color
+f1(2).LineWidth=1;
+set(f1(1).Parent,'XTickLabel',{'Forward correlated','Reverse correlated'});
+ymax=ceil(max(reshape([nanmean(preplayF) nanmean(replayF) ; nanmean(preplayR) nanmean(replayR)],[],1)));
+ylim([0 ymax]);
+ylabel('Events/Lap');
+grid on
 
 
 %% EXPORT FIGURE
-% if saveBool
-%     save genFig_FvsR_linearTrack.mat
-% 
-%     % Set clipping off
-%     set(gca, 'Clipping', 'off');
-%     set(gcf, 'Clipping', 'off');
-%     
-%     set(gcf, 'renderer', 'painters');
-%     export_fig(['../Parts/' mfilename], '-pdf', '-eps', '-q101', '-nocrop', '-painters');
-%     %print(filename,'-dpdf','-fillpage')
-% end
+if saveBool
+    save genFig_FvsR_linearTrack.mat
+
+    % Set clipping off
+    set(gca, 'Clipping', 'off');
+    set(gcf, 'Clipping', 'off');
+    
+    set(gcf, 'renderer', 'painters');
+    export_fig(['../Parts/' mfilename], '-pdf', '-eps', '-q101', '-nocrop', '-painters');
+    %print(filename,'-dpdf','-fillpage')
+end
 
 
