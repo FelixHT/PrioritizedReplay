@@ -16,7 +16,7 @@ nActions = 4; % 1=UP; 2=DOWN; 3=RIGHT; 4=LEFT
 Q = zeros(nStates,nActions); % State-action value function
 T = zeros(nStates,nStates); % State-state transition probability
 eTr = zeros(nStates,nActions); % Eligibility matrix
-expList = nan(0,4); % Array to store individual experiences
+expList = nan(0,4); % Array to store individual experiences (sti,at,rew,stp1i)
 expLast_stp1 = nan(nStates,nActions); % <- next state
 expLast_rew = nan(nStates,nActions); % <- next reward
 numEpisodes = 0; % <- keep track of how many times we reach the end of our maze
