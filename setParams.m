@@ -38,7 +38,7 @@ params.setAllGainToOne  = false; % Set the gain term of all items to one (for de
 params.setAllNeedToOne  = false; % Set the need term of all items to one (for debugging purposes)
 params.setAllNeedToZero = false; % Set the need term of all items to zero, except for the current state (for debugging purposes)
 
-params.planAtChoicePoint = false  % When true, enable planning at the choice point defined at s_choice
+params.planAtChoicePoint = false;  % When true, enable planning at the choice point defined at s_choice
 
 %% PLOTTING SETTINGS
 params.PLOT_STEPS       = false; % Plot each step of real experience

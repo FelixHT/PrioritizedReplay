@@ -5,15 +5,15 @@ params.maze             = zeros(6,7); % zeros correspond to 'visitable' states
 params.maze(2:6,2:3)      = 1; % wall
 params.maze(2:6,5:6)      = 1; % wall
 params.s_start          = [6,4]; % beginning state (in matrix notation)
-start_position = sub2ind(size(params.maze), params.s_start(1),params.s_start(2))
+start_position = sub2ind(size(params.maze), params.s_start(1),params.s_start(2));
 params.s_start_rand     = false; % Start at random locations after reaching goal
 params.s_end            = [6,1]; % goal state (in matrix notation)
-above_end_position = sub2ind(size(params.maze), params.s_end(1)-1,params.s_end(2))  % one position above the goal
+above_end_position = sub2ind(size(params.maze), params.s_end(1)-1,params.s_end(2));  % one position above the goal
 params.rewMag           = [1; 1]; % reward magnitude (rows: locations; columns: values)
 
 params.s_choice = [2,4];
-choice_position = sub2ind(size(params.maze), params.s_choice(1),params.s_choice(2))
-params.planAtChoicePoint = true
+choice_position = sub2ind(size(params.maze), params.s_choice(1),params.s_choice(2));
+params.planAtChoicePoint = true;
 % linear track 2 starting locations, 2 goals
 % params.maze             = zeros(3,10); % zeros correspond to 'visitable' states
 % params.maze(2,:)        = 1; % wall
@@ -30,7 +30,7 @@ params.rewSTD           = 0.1; % reward Gaussian noise (rows: locations; columns
 params.rewProb          = 1; % probability of receiving each reward (columns: values)
 
 %% PLOTTING SETTINGS
-enablePlotting=false
+enablePlotting=false;
 params.PLOT_STEPS       = enablePlotting; % Plot each step of real experience
 params.PLOT_Qvals       = enablePlotting; % Plot Q-values
 params.PLOT_PLANS       = enablePlotting; % Plot each planning step
