@@ -13,18 +13,18 @@ params.rewMag           = [1; 1]; % reward magnitude (rows: locations; columns: 
 
 params.rewSTD           = 0.1; % reward Gaussian noise (rows: locations; columns: values)
 params.rewProb          = 1; % probability of receiving each reward (columns: values)
-params.planAtChoicePoint = true
+params.planAtChoicePoint = true;
 
 params.s_choice = [2,4];
-choice_position = sub2ind(size(params.maze), params.s_choice(1),params.s_choice(2))
+choice_position = sub2ind(size(params.maze), params.s_choice(1),params.s_choice(2));
 
 params.planOnlyAtGorS   = true;
 
 
 %% OVERWRITE PARAMETERS
-params.N_SIMULATIONS    = 5; % number of times to run the simulation
+params.N_SIMULATIONS    = 2; % number of times to run the simulation
 params.MAX_N_STEPS      = 1e5; % maximum number of steps to simulate
-params.MAX_N_EPISODES   = 50; % maximum number of episodes to simulate (use Inf if no max)
+params.MAX_N_EPISODES   = 30; % maximum number of episodes to simulate (use Inf if no max)
 params.nPlan            = 20; % number of steps to do in planning (set to zero if no planning or to Inf to plan for as long as it is worth it)
 params.onVSoffPolicy    = 'on-policy'; % Choose 'off-policy' (default, learns Q*) or 'on-policy' (learns Qpi) learning for updating Q-values and computing gain
 
@@ -83,14 +83,21 @@ for s=1:numel(params.maze)
     end
 end
 %%
+
+significantReplays = cell(params.N_SIMULATIONS, 0);  % cell used to store significant replay events
+replayDirections = cell(params.N_SIMULATIONS, 0);    % cell used to store direction of significant replay events (forward vs reverse)
+
 for k=1:length(simData)  % for each simulation
+% for k=1:params.N_SIMULATIONS
     fprintf('Simulation #%d\n',k);
     % Identify candidate replay events: timepoints in which the number of replayed states is greater than max(valid positions *
-    % minFracCells,minNumCells), but here minFracCells is set to zero, so it just needs to be bigger than minNumCells
+    % minFracCells,minNumCells), but here minFracCells is set to zero, so it just needs to be bigger than minNumCells. This will 
+    % happen at every planning position, because params.nPlan is bigger than minNumCells
     candidateEvents = find(cellfun('length',simData(k).replay.state)>=max(sum(params.maze(:)==0)*minFracCells,minNumCells));  % indexes of ts where there was a replay
     lapNum = [0;simData(k).numEpisodes(1:end-1)] + 1; % episode number for each time point
     lapNum_events = lapNum(candidateEvents); % episode number for each candidate event
     agentPos = simData(k).expList(candidateEvents,1); % agent position during each candidate event
+    countSignReplays = 0;  % number of significant replays
     
     for e=1:length(candidateEvents)  % for each candidate event
         eventState = simData(k).replay.state{candidateEvents(e)}; % In a multi-step sequence, simData.replay.state has 1->2 in one row, 2->3 in another row, etc
@@ -122,7 +129,9 @@ for k=1:length(simData)  % for each simulation
             end
         end
         
-        % Break this event into segments of sequential activity
+        % Break this event into segments of sequential activity and check
+        % their statistical significance
+        
         for j=1:(numel(breakPts)-1)
             thisChunk = (breakPts(j)+1):(breakPts(j+1));
             if (length(thisChunk)+1) >= minNumCells
@@ -168,9 +177,14 @@ for k=1:length(simData)  % for each simulation
                 
                 % Add significant events to 'bucket'
                 if sigBool
+                    countSignReplays  = countSignReplays +1;
+                    disp(replayState)
+                    significantReplays{k, countSignReplays}=replayState;
                     if replayDir{1}=='F'
+                        replayDirections{k, countSignReplays}='F';
                         forwardCount(k,agentPos(e)) = forwardCount(k,agentPos(e)) + 1;
                     elseif replayDir{1}=='R'
+                        replayDirections{k, countSignReplays}='R';
                         reverseCount(k,agentPos(e)) = reverseCount(k,agentPos(e)) + 1;
                     end
                 end
