@@ -44,11 +44,11 @@ params.rewProb          = 1; % probability of receiving each reward (columns: va
 params.s_choice = [1,6];  % position: 37
 params.planOnlyAtGorS   = true;
 params.planAtChoicePoint = true;
-choice_position = 31;
+choice_position = sub2ind(size(params.maze), params.s_choice(1),params.s_choice(2));
 
 
 %% OVERWRITE PARAMETERS
-params.N_SIMULATIONS    = 5; % number of times to run the simulation
+params.N_SIMULATIONS    = 1; % number of times to run the simulation
 params.MAX_N_STEPS      = 1e5; % maximum number of steps to simulate
 params.MAX_N_EPISODES   = 50; % maximum number of episodes to simulate (use Inf if no max)
 params.nPlan            = 20; % number of steps to do in planning (set to zero if no planning or to Inf to plan for as long as it is worth it)
@@ -66,7 +66,7 @@ params.PLOT_STEPS       = true; % Plot each step of real experience
 params.PLOT_Qvals       = true; % Plot Q-values
 params.PLOT_PLANS       = true; % Plot each planning step
 params.PLOT_EVM         = false; % Plot need and gain
-params.PLOT_wait        = 51 ; % Number of full episodes completed before plotting
+params.PLOT_wait        = 1000 ; % Number of full episodes completed before plotting
 
 saveStr = input('Do you want to produce figures (y/n)? ','s');
 if strcmp(saveStr,'y')
@@ -111,7 +111,7 @@ end
 %%
 eventDir = cell(params.N_SIMULATIONS,params.nPlan-1);
 results = cell(params.N_SIMULATIONS, 1);
-
+minNumCells = 2;
 for k=1:length(simData)
 
     fprintf('Simulation #%d\n',k);
@@ -126,7 +126,8 @@ for k=1:length(simData)
     for e=1:length(candidateEvents)
         eventState = simData(k).replay.state{candidateEvents(e)}; % In a multi-step sequence, simData.replay.state has 1->2 in one row, 2->3 in another row, etc
         eventAction = simData(k).replay.action{candidateEvents(e)}; % In a multi-step sequence, simData.replay.action has the action taken at each step of the trajectory
-        
+        countSignReplays = 0;  % number of significant replays
+
          % Identify break points in this event, separating event into sequences
         
         past_in_seq= false;
@@ -150,8 +151,8 @@ for k=1:length(simData)
                 eventDir{e,i} = 1;
             elseif past_in_seq && (~next_in_seq && (nextState(eventState(i),eventAction(i))>36 || eventState(i) >36))
                 eventDir{e,i} = 2;
-            elseif ~past_in_seq && (~next_in_seq && (nextState(eventState(i),eventAction(i))>36 || eventState(i) >36))
-                eventDir{e,i} = 3;
+%             elseif ~past_in_seq && (~next_in_seq && (nextState(eventState(i),eventAction(i))>36 || eventState(i) >36))
+%                 eventDir{e,i} = 0;
             end
             % If left from choice_point
 %             if eventState(i) < 36 % smaller than 36 corresponds to any state in column 5 or smaller in a maze of 7x11
@@ -159,8 +160,8 @@ for k=1:length(simData)
                 eventDir{e,i} = 4;
             elseif past_in_seq && (~next_in_seq && (nextState(eventState(i),eventAction(i))<31 || eventState(i) <31))
                 eventDir{e,i} = 5;
-            elseif ~past_in_seq && (~next_in_seq && (nextState(eventState(i),eventAction(i))<31 || eventState(i) <31))
-                eventDir{e,i} = 6;
+%             elseif ~past_in_seq && (~next_in_seq && (nextState(eventState(i),eventAction(i))<31 || eventState(i) <31))
+%                 eventDir{e,i} = 0;
             end
             
 %             if past_in_seq && next_in_seq && (nextState(eventState(i),eventAction(i))>36 || eventState(i) >36)
@@ -180,11 +181,11 @@ for k=1:length(simData)
 %                 eventDir{e,i} = 'LLL';
 %             end
 
-%             Find if this is a break point
-            if isempty(eventDir{i}) % If this transition was neither forward nor backward
+            % Find if this is a break point
+            if eventDir{e,i}==0 % If this transition was neither forward nor backward
                 breakPts = [breakPts (i-1)]; % Then, call this a breakpoint
             elseif i>1
-                if ~strcmp(eventDir{i},eventDir{i-1}) % If this transition was forward and the previous was backwards (or vice-versa)
+                if ~strcmp(eventDir{e,i},eventDir{e,i-1}) % If this transition was forward and the previous was backwards (or vice-versa)
                     breakPts = [breakPts (i-1)]; % Then, call this a breakpoint
                 end
             end
@@ -193,60 +194,67 @@ for k=1:length(simData)
             end
         end
         
-%         Break this event into segments of sequential activity
-        for j=1:(numel(breakPts)-1)
-            thisChunk = (breakPts(j)+1):(breakPts(j+1));
-            if (length(thisChunk)+1) >= minNumCells
-%                 Extract information from this sequential event
-                replayDir = eventDir(thisChunk); % Direction of transition
-                replayState = eventState([thisChunk (thisChunk(end)+1)]); % Start state
-                replayAction = eventAction([thisChunk (thisChunk(end)+1)]); % Action
-                
-%                 Assess the significance of this event
-                allPerms = cell2mat(arrayfun(@(x)randperm(length(replayState)),(1:nPerm)','UniformOutput',0));
-                sigBool = true; 
-                if runPermAnalysis
-                    fracFor = nanmean(strcmp(replayDir,'F')); % Fraction of transitions in this chunk whose direction was forward
-                    fracRev = nanmean(strcmp(replayDir,'R')); % Fraction of transitions in this chunk whose direction was reverse
-                    disScore = fracFor-fracRev;
-                    dirScore_perm = nan(1,nPerm);
-                    for p=1:nPerm
-                        thisPerm = randperm(length(replayState));
-                        replayState_perm = replayState(thisPerm);
-                        replayAction_perm = replayAction(thisPerm);
-                        replayDir_perm = cell(1,length(replayState_perm)-1);
-                        for i=1:(length(replayState_perm)-1)
-                            if nextState(replayState_perm(i),replayAction_perm(i)) == replayState_perm(i+1)
-                                replayDir_perm{i} = 'F';
-                            end
-                            if nextState(replayState_perm(i+1),replayAction_perm(i+1)) == replayState_perm(i)
-                                replayDir_perm{i} = 'R';
-                            end
-                        end
-                        fracFor = nanmean(strcmp(replayDir_perm,'F'));
-                        fracRev = nanmean(strcmp(replayDir_perm,'R'));
-                        dirScore_perm(p) = fracFor-fracRev;
-                    end
-                    dirScore_perm = sort(dirScore_perm);
-                    lThresh_score = dirScore_perm(floor(nPerm*0.025));
-                    hThresh_score = dirScore_perm(ceil(nPerm*0.975));
-                    if (disScore<lThresh_score) || (disScore>hThresh_score)
-                        sigBool = true;
-                    else
-                        sigBool = false;
-                    end
-                end
-                
-%                 Add significant events to 'bucket'
-                if sigBool
-                    if replayDir{1}=='F'
-                        forwardCount(k,agentPos(e)) = forwardCount(k,agentPos(e)) + 1;
-                    elseif replayDir{1}=='R'
-                        reverseCount(k,agentPos(e)) = reverseCount(k,agentPos(e)) + 1;
-                    end
-                end
-            end
-        end
+        % Break this event into segments of sequential activity and check
+        % their statistical significance
+        
+%         for j=1:(numel(breakPts)-1)
+%             thisChunk = (breakPts(j)+1):(breakPts(j+1));
+%             if (length(thisChunk)+1) >= minNumCells
+%                 % Extract information from this sequential event
+%                 replayDir = eventDir(thisChunk); % Direction of transition
+%                 replayState = eventState([thisChunk (thisChunk(end)+1)]); % Start state
+%                 replayAction = eventAction([thisChunk (thisChunk(end)+1)]); % Action
+%                 
+%                 % Assess the significance of this event
+%                 %allPerms = cell2mat(arrayfun(@(x)randperm(length(replayState)),(1:nPerm)','UniformOutput',0));
+%                 sigBool = true; %#ok<NASGU>
+%                 if runPermAnalysis
+%                     fracFor = nanmean(strcmp(replayDir,'F')); % Fraction of transitions in this chunk whose direction was forward
+%                     fracRev = nanmean(strcmp(replayDir,'R')); % Fraction of transitions in this chunk whose direction was reverse
+%                     disScore = fracFor-fracRev;
+%                     dirScore_perm = nan(1,nPerm);
+%                     for p=1:nPerm
+%                         thisPerm = randperm(length(replayState));
+%                         replayState_perm = replayState(thisPerm);
+%                         replayAction_perm = replayAction(thisPerm);
+%                         replayDir_perm = cell(1,length(replayState_perm)-1);
+%                         for i=1:(length(replayState_perm)-1)
+%                             if nextState(replayState_perm(i),replayAction_perm(i)) == replayState_perm(i+1)
+%                                 replayDir_perm{i} = 'F';
+%                             end
+%                             if nextState(replayState_perm(i+1),replayAction_perm(i+1)) == replayState_perm(i)
+%                                 replayDir_perm{i} = 'R';
+%                             end
+%                         end
+%                         fracFor = nanmean(strcmp(replayDir_perm,'F'));
+%                         fracRev = nanmean(strcmp(replayDir_perm,'R'));
+%                         dirScore_perm(p) = fracFor-fracRev;
+%                     end
+%                     dirScore_perm = sort(dirScore_perm);
+%                     lThresh_score = dirScore_perm(floor(nPerm*0.025));
+%                     hThresh_score = dirScore_perm(ceil(nPerm*0.975));
+%                     if (disScore<lThresh_score) || (disScore>hThresh_score)
+%                         sigBool = true;
+%                     else
+%                         sigBool = false;
+%                     end
+%                 end
+%                 
+%                 % Add significant events to 'bucket'
+%                 if sigBool
+%                     countSignReplays  = countSignReplays +1;
+%                     disp(replayState);
+%                     significantReplays{k, countSignReplays}=replayState;
+%                     if replayDir{1}=='F'
+%                         replayDirections{k, countSignReplays}='F';
+%                         forwardCount(k,agentPos(e)) = forwardCount(k,agentPos(e)) + 1;
+%                     elseif replayDir{1}=='R'
+%                         replayDirections{k, countSignReplays}='R';
+%                         reverseCount(k,agentPos(e)) = reverseCount(k,agentPos(e)) + 1;
+%                     end
+%                 end
+%             end
+%         end
     end
 
     % make some plots
@@ -263,6 +271,9 @@ for k=1:length(simData)
     LLRR = arrayfun(@(ROWIDX) sum(sum(edir(ROWIDX,:)==5)& sum(edir(ROWIDX,:)==2)>0), (1:size(edir,1)).');
 
     results{k} = {R,RR,RRR,L,LL,LLL,LLRR};
+    
+    
+    
 end
 
 %%
@@ -274,6 +285,8 @@ LL= cell(length(simData),1);
 LLL= cell(length(simData),1);
 LLRR= cell(length(simData),1);
 
+balance = cell(length(simData),1);
+
 for k=1:length(simData)
     R{k} = results{k}{1};
     RR{k} = results{k}{2};
@@ -282,38 +295,124 @@ for k=1:length(simData)
     LL{k} = results{k}{5};
     LLL{k} = results{k}{6};
     LLRR{k} = results{k}{7}; 
+    left = LL{k} ;
+    right = RR{k} ;
+    balance{k} = (left)./(left + right);
+%     balance{k}(isnan(balance{k})) = 0;
 end
 
 %%
-RRsum = arrayfun(@(x) sum(RR{x}), (1:size(R,1)).');
-LLsum = arrayfun(@(x) sum(LL{x}), (1:size(R,1)).');
-LLRRsum = arrayfun(@(x) sum(LLRR{x}), (1:size(R,1)).');
+R= cell(length(simData),1);
+RR= cell(length(simData),1);
+RRR= cell(length(simData),1);
+L= cell(length(simData),1);
+LL= cell(length(simData),1);
+LLL= cell(length(simData),1);
+LLRR= cell(length(simData),1);
 
-LLsum = LLsum-nanmean(LLRRsum);
-RRsum = RRsum-nanmean(LLRRsum);
+balance = cell(length(simData),1);
 
-LLstd=std(LLsum);
-RRstd=std(LLsum);
-LLRRstd = std(LLRRsum);
-err = [LLstd, RRstd, LLRRstd];
-data = [mean(LLsum),mean(RRsum), mean(LLRRsum)];
+for k=1:length(simData)
+    R{k} = results{k}{1};
+    RR{k} = results{k}{2};
+    RRR{k} = results{k}{3};
+    L{k} = results{k}{4};
+    LL{k} = results{k}{5};
+    LLL{k} = results{k}{6};
+    LLRR{k} = results{k}{7}; 
+    left = LL{k} ;
+    right = RR{k} ;
+%     balance{k} = (left)./(left + right);
+    balance{k} = abs( ((left)./(left + right)) - ((right)./(left + right)));
+%     balance{k}(isnan(balance{k})) = 0;
+end
+
+begin1 = 1;
+end1 = 10;%length(LLRR{1})/2;
+begin2 = length(LLRR{1}) - 20; %round(length(RR{1})/2);
+end2 = length(LLRR{1});
+
+
+RRsum1 = arrayfun(@(x) sum(RR{x}(begin1:end1)), (1:size(R,1)).');
+LLsum1 = arrayfun(@(x)sum(LL{x}(begin1:end1)), (1:size(R,1)).');
+LLRRsum1 = arrayfun(@(x) sum(LLRR{x}(begin1:end1)), (1:size(R,1)).');
+
+RRsum2 = arrayfun(@(x) sum(RR{x}(length(LLRR{x}) - 28:length(LLRR{x}))), (1:size(R,1)).');
+LLsum2 = arrayfun(@(x) sum(LL{x}(length(LLRR{x}) - 28:length(LLRR{x}))), (1:size(R,1)).');
+LLRRsum2 = arrayfun(@(x)sum(LLRR{x}(length(LLRR{x}) - 28:length(LLRR{x}))), (1:size(R,1)).');
+
+LLsum1 = LLsum1-nanmean(LLRRsum1);
+RRsum1 = RRsum1-nanmean(LLRRsum1);
+LLsum2 = LLsum2-nanmean(LLRRsum2);
+RRsum2 = RRsum2-nanmean(LLRRsum2);
+
+LLstd1=std(LLsum1);
+RRstd1=std(RRsum1);
+LLRRstd1 = std(LLRRsum1);
+LLstd2=std(LLsum2);
+RRstd2=std(RRsum2);
+LLRRstd2 = std(LLRRsum2);
+%%
+% RRsum = arrayfun(@(x) sum(RR{x}), (1:size(R,1)).');
+% LLsum = arrayfun(@(x) sum(LL{x}), (1:size(R,1)).');
+% LLRRsum = arrayfun(@(x) sum(LLRR{x}), (1:size(R,1)).');
+% 
+% 
+% LLstd=std(LLsum);
+% RRstd=std(LLsum);
+% LLRRstd = std(LLRRsum);
+%%
+balance_mean = arrayfun(@(x) nanmean(balance{x}), (1:size(R,1)).');
+balance_mean1 = arrayfun(@(x) nanmean(balance{x}(begin1:end1)), (1:size(R,1)).');
+balance_mean2 = arrayfun(@(x) nanmean(balance{x}(length(LLRR{x}) - 28:length(LLRR{x}))), (1:size(R,1)).');
+
+balance_std1 = arrayfun(@(x) nanstd(balance{x}(begin1:end1)), (1:size(R,1)).');
+balance_std2 = arrayfun(@(x) nanstd(balance{x}(length(LLRR{x}) - 28:length(LLRR{x}))), (1:size(R,1)).');
+
+balance_sem1 =  arrayfun(@(x) balance_std1(x)/ length(LLRR{x}), (1:size(R,1)).');
+balance_sem2 =  arrayfun(@(x) balance_std2(x)/ length(length(LLRR{x}) - 28:length(LLRR{x})), (1:size(R,1)).');
+
+err = [LLstd1, RRstd1, LLRRstd1, LLstd2, RRstd2, LLRRstd2];
+data = [mean(LLsum1),mean(RRsum1), mean(LLRRsum1), mean(LLsum2),mean(RRsum2), mean(LLRRsum2)];
 
 % LL vs RR vs LLRR
 figure(1); clf;
 hold on
 f1 = bar(data);
-errorbar(1:3,data,err,err);
+errorbar(1:6,data,err,err,'LineStyle','none');
 % legend({'Preplay to the left','Preplay to the right', 'Preplay in both directions'},'Location','NortheastOutside');
 % f1(1).FaceColor=[1 1 1]; % Replay bar color
 % f1(1).LineWidth=1;
 % f1(2).FaceColor=[0 0 0]; % Replay bar color
 % f1(2).LineWidth=1;
-title('Preplay in directions from the decision point');
-xticks([1,2,3]);
-set(f1(1).Parent,'XTickLabel',{'left only','right only', 'both'});
+title('Sequences in directions from the decision point');
+xticks([1,2,3,4,5,6]);
+set(f1(1).Parent,'XTickLabel',{'left only','right only', 'both','left only','right only', 'both'});
 % ymax=ceil(max(reshape([nanmean(preplayF) nanmean(replayF) ; nanmean(preplayR) nanmean(replayR)],[],1)));
 % ylim([0 ymax]);
 % ylabel('Events/Lap');
+grid on
+
+
+err = [nanmean(balance_sem1), nanmean(balance_sem2)];
+data = [nanmean(balance_mean1),nanmean(balance_mean2)];
+
+% L/R balance
+figure; clf;
+hold on
+f1 = bar(data);
+errorbar(1:2,data,err, err,'LineStyle','none');
+% legend({'Preplay to the left','Preplay to the right', 'Preplay in both directions'},'Location','NortheastOutside');
+% f1(1).FaceColor=[1 1 1]; % Replay bar color
+% f1(1).LineWidth=1;
+% f1(2).FaceColor=[0 0 0]; % Replay bar color
+% f1(2).LineWidth=1;
+title('Sequences in directions from the decision point');
+xticks([1,2]);
+set(f1(1).Parent,'XTickLabel',{'first 10 trials','last 10 trials'});
+% ymax=ceil(max(reshape([nanmean(preplayF) nanmean(replayF) ; nanmean(preplayR) nanmean(replayR)],[],1)));
+ylim([0 1]);
+ylabel('L / R balance');
 grid on
 
 
