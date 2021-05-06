@@ -13,7 +13,7 @@ setParams;
 
 params.maze             = zeros(6,11); % zeros correspond to 'visitable' states
 params.maze(2:6,3:9)      = 1; % wall
-params.maze(2:4,6)      = 0; % wall
+params.maze(2:4,6)      = 0; % path in the center
 params.s_start          = [4,6]; % beginning state (in matrix notation)
 params.s_start_rand     = false; % Start at random locations after reaching goal
 params.s_end            = [6,1; 6,11]; % goal state (in matrix notation)
